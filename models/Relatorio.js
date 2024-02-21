@@ -1,24 +1,6 @@
 var knex = require("../database/connection");
 const moment = require('moment');
-/**
- * 
- * 
-                $sql = "select distinct semana from sinan s $filt order by semana";
-                //echo $sql;
-                $bd->query($sql, 0);
-                if ($bd->numRows() === 0) {
-                    echo("<p>Nenhum registro atende aos critérios.</p>");
-                } else {
-                    $rows = $bd->rows();//print_r($rows);
-                    $sql = "SELECT m.nome as municipio, ";
-                    foreach($rows as $row){
-                        $sql.= "sum(case when semana='".$row['semana']."' then 1 else 0 end) as \"".$row['semana']."\",";
-                    }
-                    $sql = substr($sql,0,-1). " from sinan s join municipio m using(id_municipio) $filt group by m.nome";
-                }   
-                $this->titulo = "Casos por Semana";
-                break;
- */
+
 
 class Relatorio{
   strFilter = [];
@@ -27,9 +9,10 @@ class Relatorio{
     try{
         var filtros = await this.createFilter(filter,'captura', true);
 
-        var result =  knex.select(['a.nome as agravo', 'm.nome as municipio', 's.id_sinan as sinan', 's.nome', 's.endereco', 's.semana', 's.observacao'])
+        var result =  knex.select(['a.nome as agravo', 's.id_sinan as sinan', 's.nome', 's.endereco', 's.semana', 's.observacao'])
         .column(knex.raw("CASE id_resultado WHEN 1 THEN 'Conf' WHEN 2 THEN 'Desc' ELSE 'Inv' END as resultado"))
         .column(knex.raw("st_asText(coordenadas) as coordenadas"))
+        .column(knex.raw("trim(m.nome) as municipio"))
         .table("sinan as s")
         .join('municipio as m','m.id_municipio','=','s.id_municipio')
         .join('agravo as a','a.id_agravo','=','s.id_agravo')
@@ -62,7 +45,7 @@ class Relatorio{
           });
         });
         
-        var result = await knex.select(['m.nome as municipio'])
+        var result = await knex.column(knex.raw("trim(m.nome) as municipio"))
           .table("sinan as s")
           .join('municipio as m','m.id_municipio','=','s.id_municipio')
           .modify(function(queryBuilder) {

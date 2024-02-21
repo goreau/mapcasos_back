@@ -1,6 +1,46 @@
 var Generic = require("../models/Generic");
+const fs = require("fs");
+//const csv = require("csv-parser");
+
 
 class GenericController {
+  async postFile(req, res){
+    try{
+      var file = req.file;
+
+      Generic.insertCasos(file.path);
+      
+      res.status(200);
+      res.json({ msg: "Arquivo salvo!"});
+
+    } catch (error) {
+      res.status(400).send(error);
+    }
+  }
+
+  async postFileCsvSemUso(req, res){
+    try{
+      var file = req.file;
+      var results = [];
+      await fs.createReadStream(file.path)
+      .pipe(csv({ separator: ';' }))
+      .on("data", data => results.push(data))
+      .on("end", async () => {
+        var ret = Generic.insertCasos(results);
+//tirei o async pra não ficar esperando
+      //  if (ret) {
+          res.status(200);
+          res.json({ msg: "Arquivo salvo!"});
+  //      } else {
+  //        res.status(400).send('Erro na importação');
+  //      }
+      }); 
+    
+    } catch (error) {
+      res.status(400).send(error);
+    }
+  }
+
   async listFiles(req, res) {
    const {  promises: fs } = require("fs");
     const path = require("path");
@@ -36,8 +76,7 @@ class GenericController {
   }
 
   async geocode(req, res) {
-    var address = 'Rua Camé, 1040 São Paulo';// req.params.address;
-    
+    var address = req.params.address; //'Rua Camé, 1040 - São Paulo - SP - Brazil';// 
     var geo = await Generic.geocode(address);
     res.json(geo);
   }

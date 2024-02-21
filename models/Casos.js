@@ -2,6 +2,8 @@ var knex = require("../database/connection");
 const moment = require('moment');
 
 class Casos{
+    strFilter = '';
+    
     async getCasos(filtro) {
         try {
           var result = [];
@@ -113,7 +115,7 @@ class Casos{
                   queryBuilder.where(el.field, el.operator, el.value);
                 });
               });
-            
+
             return result;
         } catch (err) {
             console.log(err);
@@ -137,8 +139,7 @@ class Casos{
 
     async createFilter(filter, tipo, isStr) {
         var filtros = [];
-        if (isStr)
-          this.strFilter = [];
+        this.strFilter = '';
 
         if (filter.id_municipio && filter.id_municipio > 0){
 
@@ -146,8 +147,7 @@ class Casos{
   
           var mun = await knex('municipio').where('id_municipio',filter.id_municipio).first();
   
-          if (isStr)
-            this.strFilter.push('Município: ' + mun.nome.trim());
+          this.strFilter = mun.nome.trim();
         } 
 
         if (filter.agravo && filter.agravo > 0){
@@ -156,8 +156,7 @@ class Casos{
     
             var agr = await knex('agravo').where('id_agravo',filter.agravo).first();
     
-            if (isStr)
-              this.strFilter.push('Agravo: ' + agr.nome.trim());
+            this.strFilter +=' ('+agr.nome.trim()+')';
         } 
 
         if (filter.semana && filter.semana > 0){
@@ -170,24 +169,19 @@ class Casos{
             filtros.push({field: 'id_resultado', operator: 'IN', value: filter.status})
             for (var item of filter.status){
                 var res = await knex('resultado').where('id_resultado',item).first();
-           
-                this.strFilter.push('Resultado: ' + res.descricao.trim());
             }
         } 
   
         if (filter.dt_inicio){
           
             filtros.push({field: 'dt_sintomas', operator: '>=',value: filter.dt_inicio});
-            if (isStr)
-            this.strFilter.push('Data Início Sintomas >= ' + this.formatDate(filter.dt_inicio));
+            
           
         }
   
         if (filter.dt_final){
           
-            filtros.push({field: 'dt_sintomas', operator: '<=',value: filter.dt_final});
-            if (isStr)
-            this.strFilter.push('Data Início Sintomas <= ' + this.formatDate(filter.dt_final));
+          filtros.push({field: 'dt_sintomas', operator: '<=',value: filter.dt_final});
          
         }
   

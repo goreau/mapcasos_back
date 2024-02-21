@@ -30,7 +30,7 @@ class CasosController {
         var filter =  req.params.filter;
 
         var lista = await Casos.getSemanas(filter);
-        res.json(lista);
+        res.json({lista: lista, filter: Casos.strFilter});
     }
 
     async getAgravos(req, res){
